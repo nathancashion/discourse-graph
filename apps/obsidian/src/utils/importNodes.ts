@@ -370,6 +370,12 @@ const fetchNodeContentForImport = async ({
     full.last_modified === null ||
     authorId === null
   ) {
+    console.log("[DG Import] fetchNodeContentForImport:", {
+      nodeInstanceId,
+      found: false,
+      modifiedAt: null,
+      fileName: null,
+    });
     return null;
   }
 
@@ -378,7 +384,7 @@ const fetchNodeContentForImport = async ({
     typeof (direct.metadata as Record<string, any>).filePath === "string"
       ? (direct.metadata as Record<string, any>).filePath
       : undefined;
-  return {
+  const result = {
     fileName: direct.text,
     content: full.text,
     createdAt: new Date(full.created + "Z").valueOf(),
@@ -386,6 +392,13 @@ const fetchNodeContentForImport = async ({
     filePath,
     authorId,
   };
+  console.log("[DG Import] fetchNodeContentForImport:", {
+    nodeInstanceId,
+    found: true,
+    modifiedAt: new Date(result.modifiedAt).toISOString(),
+    fileName: result.fileName,
+  });
+  return result;
 };
 
 /**
@@ -1297,6 +1310,13 @@ export const importSelectedNodes = async ({
           importedFromRid,
         );
 
+        console.log(
+          "[DG Import] importSelectedNodes: node:",
+          node.nodeInstanceId,
+          "existingFile:",
+          existingFile?.path ?? null,
+        );
+
         const nodeContent = await fetchNodeContentForImport({
           client,
           spaceId,
@@ -1331,6 +1351,12 @@ export const importSelectedNodes = async ({
         if (existingFile) {
           // Update existing file - use its current path
           finalFilePath = existingFile.path;
+          console.log(
+            "[DG Import] importSelectedNodes: finalFilePath:",
+            finalFilePath,
+            "modifiedAt:",
+            new Date(modifiedAt).toISOString(),
+          );
         } else {
           // Preserve source vault folder structure under import/{vaultName} when we have filePath from Content
           const pathUnderImport =
@@ -1338,6 +1364,12 @@ export const importSelectedNodes = async ({
               ? sanitizePathForImport(contentFilePath)
               : `${sanitizedFileName}.md`;
           finalFilePath = `${importFolderPath}/${pathUnderImport}`;
+          console.log(
+            "[DG Import] importSelectedNodes: finalFilePath:",
+            finalFilePath,
+            "modifiedAt:",
+            new Date(modifiedAt).toISOString(),
+          );
 
           // Ensure all parent folders exist (e.g. import/VaultName/Discourse Nodes/SubFolder)
           const dirParts = finalFilePath.split("/");
