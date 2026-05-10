@@ -511,10 +511,15 @@ export const processAndInsertBatch = async <
 
 export const getSessionUserData = async (
   client: DGSupabaseClient,
-): Promise<{ name: string; type: AgentType; email?: string } | null> => {
+): Promise<{
+  id: string;
+  name: string;
+  type: AgentType;
+  email?: string;
+} | null> => {
   const session = await client.auth.getSession();
   if (!session?.data?.session?.user) return null;
-  const email = session.data.session.user.email;
+  const { id, email } = session.data.session.user;
   if (email) {
     const [name, host] = email.split("@") as [string, string];
     if (host === "database.discoursegraphs.com" && name.endsWith("-anon")) {
@@ -528,10 +533,10 @@ export const getSessionUserData = async (
       if (spaceReq.error || !spaceReq.data) {
         return null;
       }
-      return { name: spaceReq.data.name, type: "anonymous", email };
+      return { name: spaceReq.data.name, id, type: "anonymous", email };
     }
     if (host === "groups.discoursegraphs.com") {
-      return { name, email, type: "group" };
+      return { name, id, email, type: "group" };
     }
   }
   const accountReq = await client
@@ -543,5 +548,5 @@ export const getSessionUserData = async (
   if (accountReq.error || !accountReq.data) {
     return null;
   }
-  return { name: accountReq.data.name, type: "person", email };
+  return { id, name: accountReq.data.name, type: "person", email };
 };

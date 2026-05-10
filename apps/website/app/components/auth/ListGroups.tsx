@@ -9,6 +9,7 @@ type GroupData = Tables<"my_groups">;
 
 export const ListGroups = () => {
   const [groupData, setGroupData] = useState<GroupData[] | null>(null);
+  const [adminData, setAdminData] = useState<Record<string, boolean>>({});
   const [userName, setUserName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,16 +22,32 @@ export const ListGroups = () => {
           setError("Not logged in");
           return;
         }
-        const { name, type } = userData;
+        const { name, type, id } = userData;
         if (type === "anonymous") setUserName("Space " + name);
         else if (type === "group") setUserName("group " + name);
         else if (type === "person") setUserName(name);
-        const response = await client.from("my_groups").select();
-        if (response.error) {
-          setError(response.error.message);
+        const groupResponse = await client.from("my_groups").select();
+        if (groupResponse.error) {
+          setError(groupResponse.error.message);
           return;
         }
-        setGroupData(response.data);
+        setGroupData(groupResponse.data);
+        const membershipReq = await client
+          .from("group_membership")
+          .select("group_id,admin")
+          .eq("member_id", id);
+        if (membershipReq.error) {
+          setError(membershipReq.error.message);
+          return;
+        }
+        setAdminData(
+          Object.fromEntries(
+            membershipReq.data.map(({ group_id, admin }) => [
+              group_id,
+              admin || false,
+            ]),
+          ),
+        );
       } catch (error) {
         setError(
           error instanceof Error ? error.message : "Unknown error occurred",
@@ -56,7 +73,11 @@ export const ListGroups = () => {
             <ul>
               {groupData.map((d) => (
                 <li key={d.id}>
-                  <a href={"group/" + d.id!}>{d.name}</a>
+                  {adminData[d.id || ""] ? (
+                    <a href={"group/" + d.id!}>{d.name}</a>
+                  ) : (
+                    d.name
+                  )}
                 </li>
               ))}
             </ul>
