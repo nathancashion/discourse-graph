@@ -5,6 +5,9 @@ import type {
 } from "@supabase/supabase-js";
 import { PostgrestError } from "@supabase/supabase-js";
 import type { Database } from "@repo/database/dbTypes";
+import type { DGSupabaseClient } from "@repo/database/lib/client";
+
+type AgentType = Database["public"]["Enums"]["AgentType"] | "group";
 
 type PublicTableName = keyof Database["public"]["Tables"];
 type RawTables<TN extends PublicTableName> =
@@ -504,4 +507,41 @@ export const processAndInsertBatch = async <
     }
   }
   return { ...result, data: processedResults };
+};
+
+export const getSessionUserData = async (
+  client: DGSupabaseClient,
+): Promise<{ name: string; type: AgentType; email?: string } | null> => {
+  const session = await client.auth.getSession();
+  if (!session?.data?.session?.user) return null;
+  const email = session.data.session.user.email;
+  if (email) {
+    const [name, host] = email.split("@") as [string, string];
+    if (host === "database.discoursegraphs.com" && name.endsWith("-anon")) {
+      const parts = name.split("-");
+      const spaceId = Number.parseInt(parts[1]!);
+      const spaceReq = await client
+        .from("Space")
+        .select("name")
+        .eq("id", spaceId)
+        .maybeSingle();
+      if (spaceReq.error || !spaceReq.data) {
+        return null;
+      }
+      return { name: spaceReq.data.name, type: "anonymous", email };
+    }
+    if (host === "groups.discoursegraphs.com") {
+      return { name, email, type: "group" };
+    }
+  }
+  const accountReq = await client
+    .from("PlatformAccount")
+    .select("name")
+    .eq("dg_account", session.data.session.user.id)
+    .eq("agent_type", "person")
+    .maybeSingle();
+  if (accountReq.error || !accountReq.data) {
+    return null;
+  }
+  return { name: accountReq.data.name, type: "person", email };
 };
