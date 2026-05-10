@@ -42,6 +42,7 @@ export const ListGroups = () => {
         }
         setAdminData(
           Object.fromEntries(
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             membershipReq.data.map(({ group_id, admin }) => [
               group_id,
               admin || false,
