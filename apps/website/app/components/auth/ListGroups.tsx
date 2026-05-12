@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "~/utils/supabase/client";
-import { getSessionUserData } from "~/utils/supabase/dbUtils";
+import { getSessionUserData } from "~/utils/supabase/account";
 import { useState, useEffect } from "react";
 import { Tables } from "@repo/database/dbTypes";
 import useInternalError from "~/utils/internalError";
