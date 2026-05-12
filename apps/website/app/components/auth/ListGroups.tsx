@@ -4,6 +4,7 @@ import { createClient } from "~/utils/supabase/client";
 import { getSessionUserData } from "~/utils/supabase/dbUtils";
 import { useState, useEffect } from "react";
 import { Tables } from "@repo/database/dbTypes";
+import useInternalError from "~/utils/internalError";
 
 type GroupData = Tables<"my_groups">;
 
@@ -12,6 +13,7 @@ export const ListGroups = () => {
   const [adminData, setAdminData] = useState<Record<string, boolean>>({});
   const [userName, setUserName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const internalError = useInternalError();
 
   useEffect(() => {
     const getGroups = async () => {
@@ -19,7 +21,8 @@ export const ListGroups = () => {
         const client = createClient();
         const userData = await getSessionUserData(client);
         if (!userData) {
-          setError("Not logged in");
+          const userMessage = "Not logged in.\nPlease log in from application.";
+          setError(userMessage);
           return;
         }
         const { name, type, id } = userData;
@@ -37,7 +40,12 @@ export const ListGroups = () => {
           .select("group_id,admin")
           .eq("member_id", id);
         if (membershipReq.error) {
-          setError(membershipReq.error.message);
+          const userMessage = "Could not access DiscourseGraphs";
+          setError(userMessage);
+          internalError({
+            error: membershipReq.error,
+            userMessage,
+          });
           return;
         }
         setAdminData(
@@ -50,17 +58,22 @@ export const ListGroups = () => {
           ),
         );
       } catch (error) {
-        setError(
-          error instanceof Error ? error.message : "Unknown error occurred",
-        );
+        const userMessage = "Unknown error occurred";
+        setError(userMessage);
+        internalError({
+          error,
+          userMessage,
+        });
       }
     };
     void getGroups();
-  }, []);
+  }, [internalError]);
 
   return (
     <div>
-      <div>{userName ? <p>Logged in as {userName}</p> : ""}</div>
+      <div className="text-right text-sm">
+        {userName ? <p>Logged in as {userName}</p> : ""}
+      </div>
       <div>
         {error ? (
           "Error: " + error
@@ -71,7 +84,7 @@ export const ListGroups = () => {
         ) : (
           <>
             <p>Your groups:</p>
-            <ul>
+            <ul className="list-inside list-disc space-y-2">
               {groupData.map((d) => (
                 <li key={d.id}>
                   {adminData[d.id || ""] ? (

@@ -2,11 +2,13 @@ import { ListGroups } from "~/components/auth/ListGroups";
 import { Suspense } from "react";
 
 const Page = () => (
-  <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-    <Suspense fallback={<>Loading</>}>
-      <ListGroups />
-    </Suspense>
-  </div>
+  <main>
+    <div className="mx-auto max-w-6xl space-y-12 px-6 py-12">
+      <Suspense fallback={<>Loading</>}>
+        <ListGroups />
+      </Suspense>
+    </div>
+  </main>
 );
 
 export default Page;
