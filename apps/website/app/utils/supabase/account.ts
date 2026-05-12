@@ -44,3 +44,39 @@ export const getSessionUserData = async (
   }
   return { id, name: accountReq.data.name, type: "person", email };
 };
+
+export const getGroupMemberList = async (
+  client: DGSupabaseClient,
+  groupId: string,
+): Promise<
+  {
+    id: string;
+    name: string;
+    agentType: AgentType; // eslint-disable-line @typescript-eslint/naming-convention
+    admin: boolean;
+  }[]
+> => {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const results = await client.rpc("group_members", { p_group_id: groupId });
+  if (results.error) throw results.error;
+  if (!results.data) return [];
+  return (
+    results.data
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      .map(({ id, name, agent_type, admin }) => ({
+        id,
+        name,
+        agentType: agent_type,
+        admin,
+      }))
+      .filter(
+        ({ id, name, agentType, admin }) =>
+          admin !== null && id !== null && name !== null && agentType !== null,
+      ) as unknown as {
+      admin: boolean;
+      id: string;
+      name: string;
+      agentType: AgentType;
+    }[]
+  );
+};

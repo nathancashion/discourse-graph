@@ -1530,6 +1530,16 @@ export type Database = {
         Returns: string
       }
       group_exists: { Args: { group_id_: string }; Returns: boolean }
+      group_members: {
+        Args: { p_group_id: string }
+        Returns: Database["public"]["CompositeTypes"]["group_member_info"][]
+        SetofOptions: {
+          from: "*"
+          to: "group_member_info"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       in_group: { Args: { group_id_: string }; Returns: boolean }
       in_space: {
         Args: {
@@ -1831,6 +1841,13 @@ export type Database = {
         author_inline:
           | Database["public"]["CompositeTypes"]["account_local_input"]
           | null
+      }
+      group_member_info: {
+        id: number | null
+        name: string | null
+        platform: Database["public"]["Enums"]["Platform"] | null
+        agent_type: Database["public"]["Enums"]["AgentType"] | null
+        admin: boolean | null
       }
       inline_embedding_input: {
         model: string | null
