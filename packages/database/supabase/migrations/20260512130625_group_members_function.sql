@@ -15,7 +15,8 @@ WHERE id IN (
         JOIN public."SpaceAccess" USING (space_id)
         JOIN public.my_user_accounts() ON (account_uid = my_user_accounts)
     WHERE permissions >= 'partial'
-    UNION SELECT id FROM public."PlatformAccount" WHERE dg_account=auth.uid()
+    UNION
+    SELECT id FROM public."PlatformAccount" WHERE dg_account = auth.uid()
 );
 
 CREATE TYPE public.group_member_info AS (
